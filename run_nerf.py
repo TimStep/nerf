@@ -2,7 +2,10 @@ import os
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 import sys
-import tensorflow as tf
+import tensorflow as tf2
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+from tensorflow.python.ops.summary_ops_v2 import record_summaries_every_n_global_steps
 import numpy as np
 import imageio
 import json
@@ -236,9 +239,10 @@ def render_rays(ray_batch,
         ret['disp0'] = disp_map_0
         ret['acc0'] = acc_map_0
         ret['z_std'] = tf.math.reduce_std(z_samples, -1)  # [N_rays]
-
+	
     for k in ret:
         tf.debugging.check_numerics(ret[k], 'output {}'.format(k))
+        #print("dieze")
 
     return ret
 
@@ -750,7 +754,7 @@ def train():
     print('VAL views are', i_val)
 
     # Summary writers
-    writer = tf.contrib.summary.create_file_writer(
+    writer = tf2.summary.create_file_writer(
         os.path.join(basedir, 'summaries', expname))
     writer.set_as_default()
 
@@ -813,6 +817,7 @@ def train():
 
             # Compute MSE loss between predicted and true RGB.
             img_loss = img2mse(rgb, target_s)
+            #DEBUG print(extras.items())
             trans = extras['raw'][..., -1]
             loss = img_loss
             psnr = mse2psnr(img_loss)
@@ -875,12 +880,12 @@ def train():
 
             print(expname, i, psnr.numpy(), loss.numpy(), global_step.numpy())
             print('iter time {:.05f}'.format(dt))
-            with tf.contrib.summary.record_summaries_every_n_global_steps(args.i_print):
-                tf.contrib.summary.scalar('loss', loss)
-                tf.contrib.summary.scalar('psnr', psnr)
-                tf.contrib.summary.histogram('tran', trans)
+            with record_summaries_every_n_global_steps(args.i_print):
+                tf2.summary.scalar('loss', loss)
+                tf2.summary.scalar('psnr', psnr)
+                tf2.summary.histogram('tran', trans)
                 if args.N_importance > 0:
-                    tf.contrib.summary.scalar('psnr0', psnr0)
+                    tf2.summary.scalar('psnr0', psnr0)
 
             if i % args.i_img == 0:
 
@@ -900,25 +905,25 @@ def train():
                     os.makedirs(testimgdir, exist_ok=True)
                 imageio.imwrite(os.path.join(testimgdir, '{:06d}.png'.format(i)), to8b(rgb))
 
-                with tf.contrib.summary.record_summaries_every_n_global_steps(args.i_img):
+                with tf.estimator.summary.record_summaries_every_n_global_steps(args.i_img):
 
-                    tf.contrib.summary.image('rgb', to8b(rgb)[tf.newaxis])
-                    tf.contrib.summary.image(
+                    tf.estimator.summary.image('rgb', to8b(rgb)[tf.newaxis])
+                    tf.estimator.summary.image(
                         'disp', disp[tf.newaxis, ..., tf.newaxis])
-                    tf.contrib.summary.image(
+                    tf.estimator.summary.image(
                         'acc', acc[tf.newaxis, ..., tf.newaxis])
 
-                    tf.contrib.summary.scalar('psnr_holdout', psnr)
-                    tf.contrib.summary.image('rgb_holdout', target[tf.newaxis])
+                    tf.estimator.summary.scalar('psnr_holdout', psnr)
+                    tf.estimator.summary.image('rgb_holdout', target[tf.newaxis])
 
                 if args.N_importance > 0:
 
-                    with tf.contrib.summary.record_summaries_every_n_global_steps(args.i_img):
-                        tf.contrib.summary.image(
+                    with tf.estimator.summary.record_summaries_every_n_global_steps(args.i_img):
+                        tf.estimator.summary.image(
                             'rgb0', to8b(extras['rgb0'])[tf.newaxis])
-                        tf.contrib.summary.image(
+                        tf.estimator.summary.image(
                             'disp0', extras['disp0'][tf.newaxis, ..., tf.newaxis])
-                        tf.contrib.summary.image(
+                        tf.estimator.summary.image(
                             'z_std', extras['z_std'][tf.newaxis, ..., tf.newaxis])
 
         global_step.assign_add(1)

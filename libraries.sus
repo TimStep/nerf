@@ -1,0 +1,8 @@
+pip install os
+pip install sys
+pip install numpy
+pip install imageio
+pip install configargparse
+pip install matplotlib
+pip install trimesh pyrender PyMCubes
+pip install tensorflow

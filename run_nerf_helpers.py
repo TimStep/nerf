@@ -1,6 +1,8 @@
 import os
 import sys
-import tensorflow as tf
+import tensorflow as tf2
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import numpy as np
 import imageio
 import json
@@ -79,7 +81,7 @@ def get_embedder(multires, i=0):
 
 def init_nerf_model(D=8, W=256, input_ch=3, input_ch_views=3, output_ch=4, skips=[4], use_viewdirs=False):
 
-    relu = tf.keras.layers.ReLU()
+    relu = tf2.keras.layers.ReLU()
     def dense(W, act=relu): return tf.keras.layers.Dense(W, activation=act)
 
     print('MODEL', input_ch, input_ch_views, type(

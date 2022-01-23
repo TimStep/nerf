@@ -1,0 +1,14 @@
+[GOAL] Make a by-function NeRF description
+
+***
+[terminology if needed]
+***
+
+Chapter 1: run_nerf.py
+
+
+
+
+Chapter Last: export_mesh.ipynb
+
+
